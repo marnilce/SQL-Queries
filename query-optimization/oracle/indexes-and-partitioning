@@ -27,7 +27,7 @@ Use Cases: Campaign Performance, User Engagement, Churn Prevention
 Table Structure:
 - 100+ million user activity events
 - Growing 3-5M events daily (streaming + cable TV)
-- Platform: DirecTV GO (streaming) + Cable TV
+
 - Main use cases:
   1. Marketing: Campaign performance and user acquisition
   2. Product: Content engagement and user behavior

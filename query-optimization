@@ -1,3 +1,19 @@
+/*
+================================================================================
+PLATFORM-SPECIFIC QUERY OPTIMIZATIONS
+================================================================================
+
+⚠️ DISCLAIMER: These are simulated examples for educational purposes.
+   All queries are fictional and do not represent actual production code.
+
+The goal is to show the performance differences between Oracle, Redshift,
+Teradata, and SQL Server, and, for those using SAS Enterprise Guide, to highlight
+the superior performance (without comparison) between Proc SQL and native commands.
+
+Purpose: Show optimization techniques across different database platforms
+Structure: Problem → Slow Query → Optimized Solutions per Platform
+
+================================================================================
 */
 -- ============================================================================
 -- SCENARIO 1: Daily Active Users Aggregation

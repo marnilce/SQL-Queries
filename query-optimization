@@ -1,1 +1,75 @@
+*/
+-- ============================================================================
+-- SCENARIO 1: Daily Active Users Aggregation
+-- ============================================================================
+-- Business Question: Calculate daily active users by platform for last 30 days
+-- Dataset: 100M user events
+-- Problem: Full table scan on massive table
 
+-- ❌ SLOW QUERY (Works on all platforms but inefficient)
+-- Execution Time: ~60-90 seconds
+-- Problem: Full table scan, no partitioning leverage, inefficient date function
+
+SELECT 
+    CAST(event_timestamp AS DATE) AS activity_date,
+    platform_type,
+    COUNT(DISTINCT user_id) AS daily_active_users
+FROM 
+    user_events
+WHERE 
+    CAST(event_timestamp AS DATE) >= CAST(CURRENT_TIMESTAMP AS DATE) - 30
+    AND event_type IN ('LOGIN', 'PLAY')
+GROUP BY 
+    CAST(event_timestamp AS DATE),
+    platform_type
+ORDER BY 
+    activity_date DESC;
+
+/*
+Why it's slow:
+1. Full table scan on 100M records
+2. Function on indexed column (CAST prevents index usage)
+3. No partition pruning
+4. Not leveraging platform-specific features
+*/
+
+
+-- ✅ OPTIMIZED - ORACLE
+-- Execution Time: ~2 seconds (30x faster)
+-- Optimizations: Partition pruning, proper date handling, parallel execution
+
+SELECT /*+ PARALLEL(4) */
+    TRUNC(event_date) AS activity_date,
+    platform_type,
+    COUNT(DISTINCT user_id) AS daily_active_users
+FROM 
+    user_events  -- Table partitioned by event_date (daily partitions)
+WHERE 
+    event_date >= TRUNC(SYSDATE) - 30
+    AND event_type IN ('LOGIN', 'PLAY')
+GROUP BY 
+    TRUNC(event_date),
+    platform_type
+ORDER BY 
+    activity_date DESC;
+
+-- Oracle-specific optimizations applied:
+-- 1. Partition pruning: Only scans last 30 daily partitions
+-- 2. No function on indexed column (event_date used directly)
+-- 3. PARALLEL hint for multi-core processing
+-- 4. Bitmap index on platform_type (low cardinality)
+
+-- Recommended Oracle setup:
+/*
+CREATE TABLE user_events (
+    ...
+    event_date DATE NOT NULL,
+    ...
+)
+PARTITION BY RANGE (event_date)
+INTERVAL (NUMTODSINTERVAL(1, 'DAY'))
+(...);
+
+CREATE BITMAP INDEX idx_platform ON user_events(platform_type) LOCAL;
+CREATE INDEX idx_event_type ON user_events(event_type) LOCAL;
+*/
